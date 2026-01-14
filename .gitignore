@@ -1,0 +1,31 @@
+# Java
+*.class
+*.jar
+*.war
+*.ear
+
+# Sensible info
+db.properties
+*.code-workspace
+.env
+
+# Maven
+target/
+.m2/repository
+
+# Gradle
+.gradle/
+build/
+
+# IDEs
+.classpath
+.project
+.settings/
+.idea/
+.vscode/
+out/
+
+# System Files
+.DS_Store
+Thumbs.db
+hs_err_pid*
