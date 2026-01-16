@@ -9,31 +9,40 @@ import connection.MySQLConnection;
 
 public class UserDAO {
     private int userExists(User user, Connection conn) {
-        if (conn == null) return -1; // connection error
+        // Returns:
+        // -1: connection error or query error
+        //  0: neither username nor email exist
+        //  1: both username and email exist
+        //  2: username exists
+        //  3: email exists
+        if (conn == null) return -1;
         
-         String checkSql = "SELECT username, email FROM user_table WHERE username = ? OR email = ?";
+        String checkSql = "SELECT username, email FROM user_table WHERE username = ? OR email = ?";
+        // prepareStatement(): Allows parameter binding using '?' and rotects against SQL Injection.
         try (PreparedStatement checkStmt = conn.prepareStatement(checkSql)) {
             checkStmt.setString(1, user.getUsername());
             checkStmt.setString(2, user.getEmail());
             
+            // executeQuery(): Executes a SELECT statement and returns a table of data representing the result set, stored in a ResultSet object.
             try (ResultSet rs = checkStmt.executeQuery()) {
+                // The ResultSet cursor starts before the first row of the table, so we call rs.next() to move to the first row.
                 if (rs.next()) {
                     String foundUser = rs.getString("username");
                     String foundEmail = rs.getString("email");
                     
-                    if (foundUser.equals(user.getUsername()) && foundEmail.equals(user.getEmail())) return 1; // Username and Email exist
-                    if (foundUser.equals(user.getUsername())) return 2; // Username exists
-                    if (foundEmail.equals(user.getEmail())) return 3; // Email exists
+                    if (foundUser.equals(user.getUsername()) && foundEmail.equals(user.getEmail())) return 1;
+                    if (foundUser.equals(user.getUsername())) return 2; 
+                    if (foundEmail.equals(user.getEmail())) return 3;
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                return -1; // Error during result set processing
+                return -1; 
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return -1; // Error during statement preparation/execution
+            return -1;
         }
-        return 0; // Neither exists
+        return 0;
     }
 
     public void createUser(User user) {
@@ -69,7 +78,7 @@ public class UserDAO {
                 pstmt.setString(1, user.getUsername());
                 pstmt.setString(2, user.getPassword());
                 pstmt.setString(3, user.getEmail());
-                pstmt.executeUpdate();
+                pstmt.executeUpdate(); // executeUpdate(): Executes an SQL statement that may be an INSERT, UPDATE, or DELETE statement or an SQL statement that returns nothing, such as an SQL DDL statement.
                 System.out.println("Usuário criado com sucesso!");
             }
             
