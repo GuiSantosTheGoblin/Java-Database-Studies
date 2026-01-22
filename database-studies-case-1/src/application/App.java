@@ -28,8 +28,8 @@ public class App {
     }
 
     public static String fixName(String name) {
-        String[] parts = name.split(" ");
         StringBuilder fixedName = new StringBuilder();
+        String[] parts = name.split(" ");
 
         for (String part : parts) {
             switch (part.length()) {
@@ -49,6 +49,65 @@ public class App {
 
         fixedName.deleteCharAt(fixedName.length() - 1); // Remove last space
         return fixedName.toString();
+    }
+
+    public static MenuAction bOrQCheck(String input) {
+        switch (input.toUpperCase()) {
+            case "B":
+                return MenuAction.BACK;
+            case "Q":
+                return MenuAction.EXIT;
+            default:
+                return MenuAction.CONTINUE;
+        }
+    }
+
+    public static MenuAction bOrQMenuDep(Scanner sc) {
+        String menuOptions = """
+
+            ===========================================
+            B. Back to Department Menu
+            Q. Quit
+            """;
+
+        while (true) {
+            System.out.println(menuOptions);
+            System.out.print("Select an option: ");
+            String choice = sc.nextLine();
+
+            switch (choice.toUpperCase()) {
+                case "B":
+                    return MenuAction.BACK;
+                case "Q":
+                    return MenuAction.EXIT;
+                default:
+                    return MenuAction.INVALID;
+            }
+        }
+    }
+
+    public static MenuAction bOrQMenuSel(Scanner sc) {
+        String menuOptions = """
+
+            ===========================================
+            B. Back to Seller Menu
+            Q. Quit
+            """;
+
+        while (true) {
+            System.out.println(menuOptions);
+            System.out.print("Select an option: ");
+            String choice = sc.nextLine();
+
+            switch (choice.toUpperCase()) {
+                case "B":
+                    return MenuAction.BACK;
+                case "Q":
+                    return MenuAction.EXIT;
+                default:
+                    return MenuAction.INVALID;
+            }
+        }
     }
 
     public static MenuAction mainMenu(Scanner sc, Connection conn) throws MySQLException {
@@ -76,8 +135,8 @@ public class App {
                     // sellerMenu(sc, conn); // Implement sellerMenu similarly
                     System.out.println("Seller Menu is under construction.");
                     break;
-                case "Q":
                 case "q":
+                case "Q":
                     return MenuAction.EXIT;
                 default:
                     System.out.println("Invalid option. Please try again.");
@@ -141,22 +200,30 @@ public class App {
                     }
                     break;
                 case "7":
-                    // Implement updateById functionality
+                    if (depUpdateById(sc, conn) == MenuAction.EXIT) {
+                        return MenuAction.EXIT;
+                    }
                     break;
                 case "8":
-                    // Implement deleteById functionality
+                    if (depUpdateByName(sc, conn) == MenuAction.EXIT) {
+                        return MenuAction.EXIT;
+                    }
                     break;
                 case "9":
-                    // Implement updateByName functionality
+                    if (depDeleteById(sc, conn) == MenuAction.EXIT) {
+                        return MenuAction.EXIT;
+                    }
                     break;
                 case "10":
-                    // Implement deleteByName functionality
+                    if (depDeleteByName(sc, conn) == MenuAction.EXIT) {
+                        return MenuAction.EXIT;
+                    }
                     break;
-                case "B":
                 case "b":
+                case "B":
                     return MenuAction.BACK;
-                case "Q":
                 case "q":
+                case "Q":
                     return MenuAction.EXIT;
                 default:
                     System.out.println("Invalid option. Please try again.");
@@ -168,6 +235,8 @@ public class App {
     public static MenuAction depFindById (Scanner sc, Connection conn) throws MySQLException {
         int departmentId;
         Department department;
+        String input;
+        MenuAction action;
 
         String menuOptions = """
 
@@ -180,14 +249,11 @@ public class App {
             System.out.println(menuOptions);
 
             System.out.print("Inform the department's ID: ");
-            String input = sc.nextLine();
+            input = sc.nextLine();
 
-            if (input.toUpperCase().equals("Q")) {
-                return MenuAction.EXIT;
-            }
-
-            if (input.toUpperCase().equals("B")) {
-                return MenuAction.BACK;
+            action = bOrQCheck(input);
+            if (action != MenuAction.CONTINUE) {
+                return action;
             }
 
             try {
@@ -210,6 +276,8 @@ public class App {
     public static MenuAction depFindByName (Scanner sc, Connection conn) throws MySQLException {
         String departmentName;
         Department department;
+        String input;
+        MenuAction action;
 
         String menuOptions = """
 
@@ -222,18 +290,14 @@ public class App {
             System.out.println(menuOptions);
 
             System.out.print("Inform the department's name: ");
-            departmentName = sc.nextLine();
-            departmentName = fixName(departmentName);
+            input = sc.nextLine();
 
-            if (departmentName.equals("Q")) {
-                return MenuAction.EXIT;
+            action = bOrQCheck(input);            
+            if (action != MenuAction.CONTINUE) {
+                return action;
             }
-
-            if (departmentName.equals("B")) {
-                return MenuAction.BACK;
-            }
-
             
+            departmentName = fixName(input);
             department = DepartmentDAO.findByName(conn, departmentName);
             if (department == null) {
                 System.out.println("There is no '" + departmentName + "' department.");
@@ -245,6 +309,8 @@ public class App {
     }
 
     public static MenuAction depShowAll(Scanner sc, Connection conn) throws MySQLException {
+        MenuAction action;
+
         System.out.println("\n========= SHOWING ALL DEPARTMENTS =========");
 
         List<Department> departments = DepartmentDAO.showAll(conn);
@@ -256,35 +322,19 @@ public class App {
             }
         }
 
-        String menuOptions = """
-
-            ===========================================
-            B. Back to Department Menu
-            Q. Quit
-            """;
-
-        while (true) {
-            System.out.println(menuOptions);
-            System.out.print("Select an option: ");
-            String choice = sc.nextLine();
-
-            switch (choice) {
-                case "B":
-                case "b":
-                    return MenuAction.BACK;
-                case "Q":
-                case "q":
-                    return MenuAction.EXIT;
-                default:
-                    System.out.println("Invalid option. Please try again.");
-                    break;
-            }
+        action = bOrQMenuDep(sc);
+        if (action == MenuAction.INVALID) {
+            System.out.println("Invalid option. Returning to Department Menu.");
+            return MenuAction.BACK;
         }
+        return action;
     }
 
     public static MenuAction depSellerCount(Scanner sc, Connection conn) throws MySQLException {
         String departmentName;
         int sellerCount;
+        String input;
+        MenuAction action;
 
         String menuOptions = """
 
@@ -297,17 +347,14 @@ public class App {
             System.out.println(menuOptions);
 
             System.out.print("Inform the department's name: ");
-            departmentName = sc.nextLine();
-            departmentName = fixName(departmentName);
-
-            if (departmentName.equals("Q")) {
-                return MenuAction.EXIT;
+            input = sc.nextLine();
+            
+            action = bOrQCheck(input);
+            if (action != MenuAction.CONTINUE) {
+                return action;
             }
-
-            if (departmentName.equals("B")) {
-                return MenuAction.BACK;
-            }
-
+            
+            departmentName = fixName(input);
             sellerCount = DepartmentDAO.sellerCount(conn, departmentName);
             switch (sellerCount){
                 case -1:
@@ -327,6 +374,8 @@ public class App {
     }
 
     public static MenuAction depSellerCountAll(Scanner sc, Connection conn) throws MySQLException {
+        MenuAction action;
+
         System.out.println("\n======== SELLER COUNT BY DEPARTMENT ========");
         
         Map<String, Integer> result = DepartmentDAO.sellerCountAll(conn);
@@ -338,35 +387,19 @@ public class App {
             }
         }
 
-        String menuOptions = """
-
-            ============================================
-            B. Back to Department Menu
-            Q. Quit
-            """;
-
-        while (true) {
-            System.out.println(menuOptions);
-            System.out.print("Select an option: ");
-            String choice = sc.nextLine();
-
-            switch (choice) {
-                case "B":
-                case "b":
-                    return MenuAction.BACK;
-                case "Q":
-                case "q":
-                    return MenuAction.EXIT;
-                default:
-                    System.out.println("Invalid option. Please try again.");
-                    break;
-            }
+        action = bOrQMenuDep(sc);
+        if (action == MenuAction.INVALID) {
+            System.out.println("Invalid option. Returning to Department Menu.");
+            return MenuAction.BACK;
         }
+        return action;
     }
 
     public static MenuAction depInsert(Scanner sc, Connection conn) throws MySQLException {
         String departmentName;
         Department department;
+        String input;
+        MenuAction action;
 
         String menuOptions = """
 
@@ -379,17 +412,19 @@ public class App {
             System.out.println(menuOptions);
 
             System.out.print("Inform the name of the department: ");
-            departmentName = sc.nextLine();
-            departmentName = fixName(departmentName);
+            input = sc.nextLine();
 
-            if (departmentName.equals("Q")) {
-                return MenuAction.EXIT;
+            if (input.trim().isEmpty()) {
+                System.out.println("Department name cannot be empty. Please try again.");
+                continue;
             }
 
-            if (departmentName.equals("B")) {
-                return MenuAction.BACK;
+            action = bOrQCheck(input);
+            if (action != MenuAction.CONTINUE) {
+                return action;
             }
-
+            
+            departmentName = fixName(input);
             department = new Department(departmentName);
             department = DepartmentDAO.insert(conn, department);
             if (department == null) {
@@ -398,6 +433,252 @@ public class App {
                 System.out.println("Department '" + department.getName() + "' inserted with id = " + department.getId() + "'.");
             }
             System.out.println();
+        }
+    }
+
+    public static MenuAction depUpdateById(Scanner sc, Connection conn) throws MySQLException {
+        int departmentId;
+        String oldName;
+        String newName;
+        Department department;
+        String input;
+        MenuAction action;
+
+        String menuOptions = """
+
+            ========= UPDATE DEPARTMENT BY ID =========
+            B. Back to Department Menu
+            Q. Quit
+            """;
+
+        while (true) {
+            System.out.println(menuOptions);
+            System.out.print("Enter the department's ID to update: ");
+            input = sc.nextLine();
+
+            action = bOrQCheck(input);
+            if (action != MenuAction.CONTINUE) {    
+                return action;
+            }
+
+            try {
+                departmentId = Integer.parseInt(input);
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid ID format. Please enter a valid integer.");
+                continue;
+            }
+
+            department = DepartmentDAO.findById(conn, departmentId);
+            if (department == null) {
+                System.out.println("Department with ID = " + departmentId + " not found.");
+                continue;
+            }
+
+            oldName = department.getName();
+            System.out.println("\nCurrent name of the department with ID = " + department.getId() + " is '" + department.getName() + "'.");
+            System.out.print("Are you sure you want to update it? (Y/N): ");
+            input = sc.nextLine();
+
+            if (input.equalsIgnoreCase("N") || input.equalsIgnoreCase("NO")) {
+                System.out.println("Update cancelled.");
+                continue;
+            } else if (!input.equalsIgnoreCase("Y") && !input.equalsIgnoreCase("YES")) {
+                System.out.println("Invalid option. Update cancelled.");
+                continue;
+            }
+
+            System.out.print("\nEnter the new name for the department: ");
+            input = sc.nextLine();
+
+            if (input.trim().isEmpty()) {
+                System.out.println("Department name cannot be empty. Please try again.");
+                continue;
+            }
+
+            action = bOrQCheck(input);
+            if (action != MenuAction.CONTINUE) {
+                return action;
+            }
+
+            newName = fixName(input);
+            department = DepartmentDAO.updateById(conn, departmentId, newName);
+            if (department != null) {
+                System.out.println("Department's name successfully updated from '" + oldName + "' to '" + department.getName() + "'.");
+            } else {
+                throw new MySQLException("Failed to update department.");
+            }
+        }
+    }
+
+    public static MenuAction depUpdateByName(Scanner sc, Connection conn) throws MySQLException {
+        String oldName;
+        String newName;
+        Department department;
+        String input;
+        MenuAction action;
+
+        String menuOptions = """
+
+            ========= UPDATE DEPARTMENT BY NAME =========
+            B. Back to Department Menu
+            Q. Quit
+            """;
+
+        while (true) {
+            System.out.println(menuOptions);
+            System.out.print("Enter the department's name to update: ");
+            input = sc.nextLine();
+
+            action = bOrQCheck(input);
+            if (action != MenuAction.CONTINUE) {    
+                return action;
+            }
+
+            oldName = fixName(input);
+            department = DepartmentDAO.findByName(conn, oldName);
+            if (department == null) {
+                System.out.println("Department with name '" + oldName + "' not found.");
+                continue;
+            }
+
+            System.out.println("\nCurrent name of the department with ID = " + department.getId() + " is '" + department.getName() + "'.");
+            System.out.print("Are you sure you want to update it? (Y/N): ");
+            input = sc.nextLine();
+
+            if (input.equalsIgnoreCase("N") || input.equalsIgnoreCase("NO")) {
+                System.out.println("Update cancelled.");
+                continue;
+            } else if (!input.equalsIgnoreCase("Y") && !input.equalsIgnoreCase("YES")) {
+                System.out.println("Invalid option. Update cancelled.");
+                continue;
+            }
+
+            System.out.print("\nEnter the new name for the department: ");
+            input = sc.nextLine();
+
+            if (input.trim().isEmpty()) {
+                System.out.println("Department name cannot be empty. Please try again.");
+                continue;
+            }
+
+            action = bOrQCheck(input);
+            if (action != MenuAction.CONTINUE) {
+                return action;
+            }
+
+            newName = fixName(input);
+            department = DepartmentDAO.updateByName(conn, oldName, newName);
+            if (department != null) {
+                System.out.println("Department's name successfully updated from '" + oldName + "' to '" + department.getName() + "'.");
+            } else {
+                throw new MySQLException("Failed to update department.");
+            }
+        }
+    }
+
+    public static MenuAction depDeleteById(Scanner sc, Connection conn) throws MySQLException {
+        int departmentId;
+        Department department;
+        String input;
+        MenuAction action;
+
+        String menuOptions = """
+
+            ========= DELETE DEPARTMENT BY ID =========
+            B. Back to Department Menu
+            Q. Quit
+            """;
+
+        while (true) {
+            System.out.println(menuOptions);
+            System.out.print("Enter the department's ID to delete: ");
+            input = sc.nextLine();
+
+            action = bOrQCheck(input);
+            if (action != MenuAction.CONTINUE) {    
+                return action;
+            }
+
+            try {
+                departmentId = Integer.parseInt(input);
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid ID format. Please enter a valid integer.");
+                continue;
+            }
+
+            department = DepartmentDAO.findById(conn, departmentId);
+            if (department == null) {
+                System.out.println("Department with ID = " + departmentId + " not found.");
+                continue;
+            }
+
+            System.out.println("\nDepartment with ID = " + departmentId + " named '" + department.getName() + "' found.");
+            System.out.print("Are you sure you want to delete it? (Y/N): ");
+            input = sc.nextLine();
+            if (input.equalsIgnoreCase("N") || input.equalsIgnoreCase("NO")) {
+                System.out.println("Deletion cancelled.");
+                continue;
+            } else if (!input.equalsIgnoreCase("Y") && !input.equalsIgnoreCase("YES")) {
+                System.out.println("Invalid option. Deletion cancelled.");
+                continue;
+            }
+
+            boolean deleted = DepartmentDAO.deleteById(conn, departmentId);
+            if (deleted) {
+                System.out.println("\nDepartment with ID = " + department.getId() + " named '" + department.getName() + "' successfully deleted.");
+            } else {
+                throw new MySQLException("Failed to delete department.");
+            }
+        }
+    }
+    
+    public static MenuAction depDeleteByName(Scanner sc, Connection conn) throws MySQLException {
+        String departmentName;
+        Department department;
+        String input;
+        MenuAction action;
+
+        String menuOptions = """
+
+            ======== DELETE DEPARTMENT BY NAME ========
+            B. Back to Department Menu
+            Q. Quit
+            """;
+
+        while (true) {
+            System.out.println(menuOptions);
+            System.out.print("Enter the department's name to delete: ");
+            input = sc.nextLine();
+
+            action = bOrQCheck(input);
+            if (action != MenuAction.CONTINUE) {
+                return action;
+            }
+
+            departmentName = fixName(input);
+            department = DepartmentDAO.findByName(conn, departmentName);
+            if (department == null) {
+                System.out.println("Department named '" + departmentName + "' not found.");
+                continue;
+            }
+
+            System.out.println("\nDepartment with ID = " + department.getId() + " named '" + department.getName() + "' found.");
+            System.out.print("Are you sure you want to delete it? (Y/N): ");
+            input = sc.nextLine();
+            if (input.equalsIgnoreCase("N") || input.equalsIgnoreCase("NO")) {
+                System.out.println("Deletion cancelled.");
+                continue;
+            } else if (!input.equalsIgnoreCase("Y") && !input.equalsIgnoreCase("YES")) {
+                System.out.println("Invalid option. Deletion cancelled.");
+                continue;
+            }
+
+            boolean deleted = DepartmentDAO.deleteByName(conn, departmentName);
+            if (deleted) {
+                System.out.println("\nDepartment with ID = " + department.getId() + " named '" + department.getName() + "' successfully deleted.");
+            } else {
+                throw new MySQLException("Failed to delete department.");
+            }
         }
     }
 }

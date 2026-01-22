@@ -186,10 +186,10 @@ public class DepartmentDAO {
     public static Department updateById(Connection conn, int id, String newName) throws MySQLException {
         // Updates the department's name based on its id number.
 
-        if (findById(conn, id) == null){
-            throw new MySQLException("There is no department with id = " + id + "."); 
+        if (findById(conn, id) == null) {
+            throw new MySQLException("There is no department with id = " + id + ".");
         }
-
+        
         String sql = "UPDATE department SET Name = ? WHERE Id = ?";
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)){
@@ -211,11 +211,12 @@ public class DepartmentDAO {
         // Updates the department's name based on its name.
 
         Department department = findByName(conn, oldName);
-        if (department == null){
-            throw new MySQLException("There is no department with name = '" + oldName + "'."); 
+        if (department == null) {
+            throw new MySQLException("There is no department with name = '" + oldName + "'.");
         }
 
         String sql = "UPDATE department SET Name = ? WHERE Name = ?";
+        
         try (PreparedStatement stmt = conn.prepareStatement(sql)){
             stmt.setString(1, newName);
             stmt.setString(2, oldName);
@@ -232,28 +233,30 @@ public class DepartmentDAO {
         }
     }
 
-    public static void deleteById(Connection conn, int id) throws MySQLException {
-        // Deletes a department based on its id number.
+    public static boolean deleteById(Connection conn, int id) throws MySQLException {
+        // Deletes a department based on its id number and returns a boolean indicating success.
+
+        String sql = "DELETE FROM department WHERE Id = ?";
 
         if (findById(conn, id) == null){
             throw new MySQLException("There is no department with id = " + id + "."); 
         }
-
-        String sql = "DELETE FROM department WHERE Id = ?";
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)){
             stmt.setInt(1, id);
             int affectedRows = stmt.executeUpdate();
 
             if (affectedRows == 0) {
-                throw new MySQLException("Deleting department failed, no rows affected.");
+                return false;
             }
+
+            return true;
         } catch (SQLException e) {
             throw new MySQLException("Could not prepare or execute the statement.", e);
         }
     }
 
-    public static void deleteByName(Connection conn, String name) throws MySQLException {
+    public static boolean deleteByName(Connection conn, String name) throws MySQLException {
         // Deletes a department based on its name.
 
         if (findByName(conn, name) == null){
@@ -267,8 +270,10 @@ public class DepartmentDAO {
             int affectedRows = stmt.executeUpdate();
 
             if (affectedRows == 0) {
-                throw new MySQLException("Deleting department failed, no rows affected.");
+                return false;
             }
+
+            return true;
         } catch (SQLException e) {
             throw new MySQLException("Could not prepare or execute the statement.", e);
         }
