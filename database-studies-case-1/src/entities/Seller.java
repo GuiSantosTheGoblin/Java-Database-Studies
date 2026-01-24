@@ -1,38 +1,35 @@
 package entities;
 
+import java.math.BigDecimal;
 import java.util.Objects;
 
 public class Seller {
-    Integer id;
-    String name;
-    String email;
-    java.util.Date birthDate;
-    double baseSalary;
-    Integer departmentId;
+    private Integer id;
+    private String name;
+    private String email;
+    private java.util.Date birthDate;
+    private BigDecimal baseSalary;
+    private Department department;
 
-    public Seller(String name, String email, java.util.Date birthDate, double baseSalary, Integer departmentId) {
+    public Seller(String name, String email, java.util.Date birthDate, BigDecimal baseSalary, Department department) {
         this.name = name;
         this.email = email;
         this.birthDate = birthDate;
         this.baseSalary = baseSalary;
-        this.departmentId = departmentId;
+        this.department = department;
     }
 
-    public Seller(Integer id, String name, String email, java.util.Date birthDate, double baseSalary, Integer departmentId) {
+    public Seller(Integer id, String name, String email, java.util.Date birthDate, BigDecimal baseSalary, Department department) {
         this.id = id;
         this.name = name;
         this.email = email;
         this.birthDate = birthDate;
         this.baseSalary = baseSalary;
-        this.departmentId = departmentId;
+        this.department = department;
     }
 
     public Integer getId() {
         return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
     }
 
     public String getName() {
@@ -59,20 +56,20 @@ public class Seller {
         this.birthDate = birthDate;
     }
 
-    public double getBaseSalary() {
+    public BigDecimal getBaseSalary() {
         return baseSalary;
     }
 
-    public void setBaseSalary(double baseSalary) {
+    public void setBaseSalary(BigDecimal baseSalary) {
         this.baseSalary = baseSalary;
     }
 
-    public Integer getDepartment() {
-        return departmentId;
+    public Department getDepartment() {
+        return department;
     }
 
-    public void setDepartment(Integer departmentId) {
-        this.departmentId = departmentId;
+    public void setDepartment(Department department) {
+        this.department = department;
     }
 
     @Override
@@ -88,19 +85,13 @@ public class Seller {
     
     @Override
     public int hashCode() {
-        return Objects.hash(name, email);
+        return Objects.hash(this.id);
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        Seller other = (Seller) obj;
-
-        return Objects.equals(name, other.name) && Objects.equals(email, other.email);
+        if (this == obj) return true;
+        if (!(obj instanceof Seller other)) return false;
+        return Objects.equals(this.id, other.id);
     }
 }

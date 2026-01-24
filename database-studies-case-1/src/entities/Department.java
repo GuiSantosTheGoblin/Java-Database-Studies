@@ -3,8 +3,8 @@ package entities;
 import java.util.Objects;
 
 public class Department {
-    Integer id;
-    String name;
+    private Integer id;
+    private String name;
 
     public Department(String name) {
         this.name = name;
@@ -17,10 +17,6 @@ public class Department {
 
     public Integer getId() {
         return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
     }
 
     public String getName() {
@@ -38,19 +34,13 @@ public class Department {
 
     @Override
     public int hashCode() {
-        return Objects.hash(name);
+        return Objects.hash(this.id);
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        Department other = (Department) obj;
-
-        return Objects.equals(name, other.name);
+        if (this == obj) return true;
+        if (!(obj instanceof Department other)) return false;
+        return Objects.equals(this.id, other.id);
     }
 }

@@ -263,6 +263,11 @@ public class App {
                 continue;
             }
 
+            if (departmentId < 1){
+                System.out.println("ID cannot be less then 1. Please try again.");
+                continue;
+            }
+
             department = DepartmentDAO.findById(conn, departmentId);
             if (department == null) {
                 System.out.println("There is no department with ID = " + departmentId + ".");
@@ -291,6 +296,11 @@ public class App {
 
             System.out.print("Inform the department's name: ");
             input = sc.nextLine();
+
+            if (input.trim().isEmpty()){
+                System.out.println("Department name cannot be empty. Please try again.");
+                continue;
+            }
 
             action = bOrQCheck(input);            
             if (action != MenuAction.CONTINUE) {
@@ -348,6 +358,11 @@ public class App {
 
             System.out.print("Inform the department's name: ");
             input = sc.nextLine();
+
+            if (input.trim().isEmpty()){
+                System.out.println("Department name cannot be empty. Please try again.");
+                continue;
+            }
             
             action = bOrQCheck(input);
             if (action != MenuAction.CONTINUE) {
@@ -425,13 +440,14 @@ public class App {
             }
             
             departmentName = fixName(input);
-            department = new Department(departmentName);
-            department = DepartmentDAO.insert(conn, department);
-            if (department == null) {
+
+            if (DepartmentDAO.findByName(conn, departmentName) != null){
                 System.out.println("Department '" + departmentName + "' already exists.");
-            } else {
-                System.out.println("Department '" + department.getName() + "' inserted with id = " + department.getId() + "'.");
+                continue;
             }
+            
+            department = DepartmentDAO.insert(conn, new Department(departmentName));
+            System.out.println("Department '" + department.getName() + "' inserted with id = " + department.getId() + "'.");
             System.out.println();
         }
     }
@@ -441,6 +457,7 @@ public class App {
         String oldName;
         String newName;
         Department department;
+        Department compDep;
         String input;
         MenuAction action;
 
@@ -465,6 +482,11 @@ public class App {
                 departmentId = Integer.parseInt(input);
             } catch (NumberFormatException e) {
                 System.out.println("Invalid ID format. Please enter a valid integer.");
+                continue;
+            }
+
+            if (departmentId < 1){
+                System.out.println("ID cannot be less then 1. Please try again.");
                 continue;
             }
 
@@ -501,12 +523,15 @@ public class App {
             }
 
             newName = fixName(input);
-            department = DepartmentDAO.updateById(conn, departmentId, newName);
-            if (department != null) {
-                System.out.println("Department's name successfully updated from '" + oldName + "' to '" + department.getName() + "'.");
-            } else {
-                throw new MySQLException("Failed to update department.");
+
+            compDep = DepartmentDAO.findByName(conn, newName);
+            if (compDep != null) {
+                System.out.println("There is already a department by the name of '" + compDep.getName() + "' with the id = " + compDep.getId() + ".");
+                continue;
             }
+
+            department = DepartmentDAO.updateById(conn, departmentId, newName);
+            System.out.println("Department's name successfully updated from '" + oldName + "' to '" + department.getName() + "'.");
         }
     }
 
@@ -514,6 +539,7 @@ public class App {
         String oldName;
         String newName;
         Department department;
+        Department compDep;
         String input;
         MenuAction action;
 
@@ -528,6 +554,11 @@ public class App {
             System.out.println(menuOptions);
             System.out.print("Enter the department's name to update: ");
             input = sc.nextLine();
+
+            if (input.trim().isEmpty()){
+                System.out.println("Department name cannot be empty. Please try again.");
+                continue;
+            }
 
             action = bOrQCheck(input);
             if (action != MenuAction.CONTINUE) {    
@@ -567,12 +598,15 @@ public class App {
             }
 
             newName = fixName(input);
-            department = DepartmentDAO.updateByName(conn, oldName, newName);
-            if (department != null) {
-                System.out.println("Department's name successfully updated from '" + oldName + "' to '" + department.getName() + "'.");
-            } else {
-                throw new MySQLException("Failed to update department.");
+            
+            compDep = DepartmentDAO.findByName(conn, newName);
+            if (compDep != null) {
+                System.out.println("There is already a department by the name of '" + compDep.getName() + "' with the id = " + compDep.getId() + ".");
+                continue;
             }
+
+            department = DepartmentDAO.updateByName(conn, department, newName);
+            System.out.println("Department's name successfully updated from '" + oldName + "' to '" + department.getName() + "'.");
         }
     }
 
@@ -603,6 +637,11 @@ public class App {
                 departmentId = Integer.parseInt(input);
             } catch (NumberFormatException e) {
                 System.out.println("Invalid ID format. Please enter a valid integer.");
+                continue;
+            }
+
+            if (departmentId < 1){
+                System.out.println("ID cannot be less then 1. Please try again.");
                 continue;
             }
 
@@ -653,6 +692,11 @@ public class App {
             action = bOrQCheck(input);
             if (action != MenuAction.CONTINUE) {
                 return action;
+            }
+
+            if (input.trim().isEmpty()){
+                System.out.println("Department name cannot be empty. Please try again.");
+                continue;
             }
 
             departmentName = fixName(input);
