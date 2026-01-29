@@ -1,15 +1,19 @@
 package application;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
+import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
 import DAO.DepartmentDAO;
+import DAO.SellerDAO;
 import connection.DBIntegrityException;
 import connection.MySQLConnection;
 import connection.MySQLException;
 import entities.Department;
+import entities.Seller;
 import util.MenuAction;
 
 public class App {
@@ -133,8 +137,9 @@ public class App {
                     }
                     break;
                 case "2":
-                    // sellerMenu(sc, conn); // Implement sellerMenu similarly
-                    System.out.println("Seller Menu is under construction.");
+                    if (sellerMenu(sc, conn) == MenuAction.EXIT) {
+                        return MenuAction.EXIT;
+                    }
                     break;
                 case "q":
                 case "Q":
@@ -740,6 +745,507 @@ public class App {
             } else {
                 throw new MySQLException("Failed to delete department.");
             }
+        }
+    }
+
+    public static MenuAction sellerMenu(Scanner sc, Connection conn) throws MySQLException {
+        String menuOptions = """
+
+                ================ SELLER MENU ================
+                1. Search seller by ID
+                2. Search seller by Name
+                3. Show all sellers
+                4. Insert new seller
+                5. Update by ID
+                6. Delete by ID
+                7. Delete by Name
+
+                B. Back to Main Menu
+                Q. Quit
+                """;
+
+        while (true) {
+            System.out.println(menuOptions);
+            System.out.print("Select an option: ");
+            String choice = sc.nextLine();
+
+            try {
+                switch (choice) {
+                    case "1":
+                        if (selFindById(sc, conn) == MenuAction.EXIT) {
+                            return MenuAction.EXIT;
+                        }
+                        break;
+                    case "2":
+                        if (selFindByName(sc, conn) == MenuAction.EXIT) {
+                            return MenuAction.EXIT;
+                        }
+                        break;
+                    case "3":
+                        if (selShowAll(sc, conn) == MenuAction.EXIT) {
+                            return MenuAction.EXIT;
+                        }
+                        break;
+                    case "4":
+                        if (selInsert(sc, conn) == MenuAction.EXIT) {
+                            return MenuAction.EXIT;
+                        }
+                        break;
+                    case "5":
+                        if (selUpdateById(sc, conn) == MenuAction.EXIT) {
+                            return MenuAction.EXIT;
+                        }
+                        break;
+                    case "6":
+                        if (selDeleteById(sc, conn) == MenuAction.EXIT) {
+                            return MenuAction.EXIT;
+                        }
+                        break;
+                    case "7":
+                        if (selDeleteByName(sc, conn) == MenuAction.EXIT) {
+                            return MenuAction.EXIT;
+                        }
+                        break;
+                    case "b":
+                    case "B":
+                        return MenuAction.BACK;
+                    case "q":
+                    case "Q":
+                        return MenuAction.EXIT;
+                    default:
+                        System.out.println("Invalid option. Please try again.");
+                }
+            } catch (DBIntegrityException e) {
+                System.out.println("Error: " + e.getMessage());
+            }
+            System.out.println();
+        }
+    }
+
+    public static MenuAction selFindById(Scanner sc, Connection conn) throws MySQLException {
+        int sellerId;
+        Seller seller;
+        String input;
+        MenuAction action;
+
+        String menuOptions = """
+
+            ========== FIND SELLER BY ID ==========
+            B. Back to Seller Menu
+            Q. Quit
+            """;
+
+        while (true) {
+            System.out.println(menuOptions);
+
+            System.out.print("Inform the seller's ID: ");
+            input = sc.nextLine();
+
+            action = bOrQCheck(input);
+            if (action != MenuAction.CONTINUE) {
+                return action;
+            }
+
+            try {
+                sellerId = Integer.parseInt(input);
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid ID format. Please enter a valid number.");
+                continue;
+            }
+
+            if (sellerId < 1) {
+                System.out.println("Seller ID must be greater than 0.");
+                continue;
+            }
+
+            seller = SellerDAO.findById(conn, sellerId);
+            if (seller == null) {
+                System.out.println("Seller with ID = " + sellerId + " not found.");
+            } else {
+                System.out.println("\n" + seller);
+            }
+            System.out.println();
+        }
+    }
+
+    public static MenuAction selFindByName(Scanner sc, Connection conn) throws MySQLException {
+        String sellerName;
+        Seller seller;
+        String input;
+        MenuAction action;
+
+        String menuOptions = """
+
+            ========== FIND SELLER BY NAME ==========
+            B. Back to Seller Menu
+            Q. Quit
+            """;
+
+        while (true) {
+            System.out.println(menuOptions);
+
+            System.out.print("Inform the seller's name: ");
+            input = sc.nextLine();
+
+            if (input.trim().isEmpty()) {
+                System.out.println("Seller name cannot be empty. Please try again.");
+                continue;
+            }
+
+            action = bOrQCheck(input);
+            if (action != MenuAction.CONTINUE) {
+                return action;
+            }
+
+            sellerName = fixName(input);
+            seller = SellerDAO.findByName(conn, sellerName);
+            if (seller == null) {
+                System.out.println("Seller named '" + sellerName + "' not found.");
+            } else {
+                System.out.println("\n" + seller);
+            }
+            System.out.println();
+        }
+    }
+
+    public static MenuAction selShowAll(Scanner sc, Connection conn) throws MySQLException {
+        MenuAction action;
+
+        System.out.println("\n========== SHOWING ALL SELLERS ==========");
+
+        List<Seller> sellers = SellerDAO.showAll(conn);
+        if (sellers.isEmpty()) {
+            System.out.println("No sellers found.");
+        } else {
+            for (Seller seller : sellers) {
+                System.out.println(seller);
+            }
+        }
+
+        action = bOrQMenuSel(sc);
+        if (action == MenuAction.INVALID) {
+            System.out.println("Invalid option. Returning to Seller Menu.");
+            return MenuAction.BACK;
+        }
+        return action;
+    }
+
+    public static MenuAction selInsert(Scanner sc, Connection conn) throws MySQLException {
+        String sellerName;
+        String email;
+        String birthDateStr;
+        String baseSalaryStr;
+        String departmentNameStr;
+        Seller seller;
+        Department department;
+        String input;
+        MenuAction action;
+
+        String menuOptions = """
+
+            ========== INSERT NEW SELLER ==========
+            B. Back to Seller Menu
+            Q. Quit
+            """;
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+
+        while (true) {
+            System.out.println(menuOptions);
+
+            System.out.print("Inform the seller's name: ");
+            input = sc.nextLine();
+
+            if (input.trim().isEmpty()) {
+                System.out.println("Seller name cannot be empty. Please try again.");
+                continue;
+            }
+
+            action = bOrQCheck(input);
+            if (action != MenuAction.CONTINUE) {
+                return action;
+            }
+
+            sellerName = fixName(input);
+
+            System.out.print("Inform the seller's email: ");
+            email = sc.nextLine();
+
+            if (email.trim().isEmpty()) {
+                System.out.println("Seller email cannot be empty. Please try again.");
+                continue;
+            }
+
+            System.out.print("Inform the seller's birth date (dd/MM/yyyy): ");
+            birthDateStr = sc.nextLine();
+
+            java.util.Date birthDate;
+            try {
+                birthDate = dateFormat.parse(birthDateStr);
+            } catch (java.text.ParseException e) {
+                System.out.println("Invalid date format. Please use dd/MM/yyyy.");
+                continue;
+            }
+
+            System.out.print("Inform the seller's base salary: ");
+            baseSalaryStr = sc.nextLine();
+
+            BigDecimal baseSalary;
+            try {
+                baseSalary = new BigDecimal(baseSalaryStr);
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid salary format. Please enter a valid number.");
+                continue;
+            }
+
+            System.out.print("Inform the department name: ");
+            departmentNameStr = sc.nextLine();
+
+            if (departmentNameStr.trim().isEmpty()) {
+                System.out.println("Department name cannot be empty.");
+                continue;
+            }
+
+            departmentNameStr = fixName(departmentNameStr);
+            department = DepartmentDAO.findByName(conn, departmentNameStr);
+
+            if (department == null) {
+                System.out.println("Department '" + departmentNameStr + "' not found.");
+                continue;
+            }
+
+            if (SellerDAO.findByName(conn, sellerName) != null) {
+                System.out.println("Seller '" + sellerName + "' already exists.");
+                continue;
+            }
+
+            seller = SellerDAO.insert(conn, new Seller(sellerName, email, birthDate, baseSalary, department));
+            System.out.println("Seller '" + seller.getName() + "' inserted with id = " + seller.getId() + ".");
+            System.out.println();
+        }
+    }
+
+    public static MenuAction selUpdateById(Scanner sc, Connection conn) throws MySQLException {
+        int sellerId;
+        String sellerName;
+        String email;
+        String birthDateStr;
+        String baseSalaryStr;
+        String departmentNameStr;
+        Seller seller;
+        Department department;
+        String input;
+        MenuAction action;
+
+        String menuOptions = """
+
+            ========== UPDATE SELLER BY ID ==========
+            B. Back to Seller Menu
+            Q. Quit
+            """;
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+
+        while (true) {
+            System.out.println(menuOptions);
+            System.out.print("Enter the seller's ID to update: ");
+            input = sc.nextLine();
+
+            action = bOrQCheck(input);
+            if (action != MenuAction.CONTINUE) {
+                return action;
+            }
+
+            try {
+                sellerId = Integer.parseInt(input);
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid ID format. Please enter a valid number.");
+                continue;
+            }
+
+            if (sellerId < 1) {
+                System.out.println("Seller ID must be greater than 0.");
+                continue;
+            }
+
+            seller = SellerDAO.findById(conn, sellerId);
+            if (seller == null) {
+                System.out.println("Seller with ID = " + sellerId + " not found.");
+                continue;
+            }
+
+            System.out.println("\nSeller with ID = " + seller.getId() + " found.");
+            System.out.println("Current information: " + seller);
+
+            System.out.print("\nEnter new name (or press Enter to keep current): ");
+            input = sc.nextLine();
+            sellerName = input.isEmpty() ? seller.getName() : fixName(input);
+
+            System.out.print("Enter new email (or press Enter to keep current): ");
+            email = sc.nextLine();
+            email = email.isEmpty() ? seller.getEmail() : email;
+
+            System.out.print("Enter new birth date dd/MM/yyyy (or press Enter to keep current): ");
+            birthDateStr = sc.nextLine();
+            java.util.Date birthDate = seller.getBirthDate();
+            if (!birthDateStr.isEmpty()) {
+                try {
+                    birthDate = dateFormat.parse(birthDateStr);
+                } catch (java.text.ParseException e) {
+                    System.out.println("Invalid date format. Keeping current date.");
+                }
+            }
+
+            System.out.print("Enter new base salary (or press Enter to keep current): ");
+            baseSalaryStr = sc.nextLine();
+            BigDecimal baseSalary = seller.getBaseSalary();
+            if (!baseSalaryStr.isEmpty()) {
+                try {
+                    baseSalary = new BigDecimal(baseSalaryStr);
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid salary format. Keeping current salary.");
+                }
+            }
+
+            System.out.print("Enter new department name (or press Enter to keep current): ");
+            departmentNameStr = sc.nextLine();
+            department = seller.getDepartment();
+            if (!departmentNameStr.isEmpty()) {
+                departmentNameStr = fixName(departmentNameStr);
+                Department newDep = DepartmentDAO.findByName(conn, departmentNameStr);
+                if (newDep == null) {
+                    System.out.println("Department '" + departmentNameStr + "' not found. Keeping current department.");
+                } else {
+                    department = newDep;
+                }
+            }
+
+            Seller updatedSeller = SellerDAO.updateById(conn, sellerId, 
+                new Seller(sellerId, sellerName, email, birthDate, baseSalary, department));
+            System.out.println("\nSeller with ID = " + updatedSeller.getId() + " successfully updated.");
+            System.out.println();
+        }
+    }
+
+    public static MenuAction selDeleteById(Scanner sc, Connection conn) throws MySQLException, DBIntegrityException {
+        int sellerId;
+        Seller seller;
+        String input;
+        MenuAction action;
+
+        String menuOptions = """
+
+            ========== DELETE SELLER BY ID ==========
+            B. Back to Seller Menu
+            Q. Quit
+            """;
+
+        while (true) {
+            System.out.println(menuOptions);
+            System.out.print("Enter the seller's ID to delete: ");
+            input = sc.nextLine();
+
+            action = bOrQCheck(input);
+            if (action != MenuAction.CONTINUE) {
+                return action;
+            }
+
+            try {
+                sellerId = Integer.parseInt(input);
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid ID format. Please enter a valid number.");
+                continue;
+            }
+
+            if (sellerId < 1) {
+                System.out.println("Seller ID must be greater than 0.");
+                continue;
+            }
+
+            seller = SellerDAO.findById(conn, sellerId);
+            if (seller == null) {
+                System.out.println("Seller with ID = " + sellerId + " not found.");
+                continue;
+            }
+
+            System.out.println("\nSeller with ID = " + seller.getId() + " found.");
+            System.out.println("Information: " + seller);
+            System.out.print("Are you sure you want to delete this seller? (Y/N): ");
+            input = sc.nextLine();
+
+            if (input.equalsIgnoreCase("N") || input.equalsIgnoreCase("NO")) {
+                System.out.println("Deletion cancelled.");
+                continue;
+            } else if (!input.equalsIgnoreCase("Y") && !input.equalsIgnoreCase("YES")) {
+                System.out.println("Invalid option. Deletion cancelled.");
+                continue;
+            }
+
+            boolean deleted = SellerDAO.deleteById(conn, sellerId);
+            if (deleted) {
+                System.out.println("\nSeller with ID = " + seller.getId() + " successfully deleted.");
+            } else {
+                System.out.println("Failed to delete seller.");
+            }
+            System.out.println();
+        }
+    }
+
+    public static MenuAction selDeleteByName(Scanner sc, Connection conn) throws MySQLException, DBIntegrityException {
+        String sellerName;
+        Seller seller;
+        String input;
+        MenuAction action;
+
+        String menuOptions = """
+
+            ========== DELETE SELLER BY NAME ==========
+            B. Back to Seller Menu
+            Q. Quit
+            """;
+
+        while (true) {
+            System.out.println(menuOptions);
+            System.out.print("Enter the seller's name to delete: ");
+            input = sc.nextLine();
+
+            action = bOrQCheck(input);
+            if (action != MenuAction.CONTINUE) {
+                return action;
+            }
+
+            if (input.trim().isEmpty()) {
+                System.out.println("Seller name cannot be empty. Please try again.");
+                continue;
+            }
+
+            sellerName = fixName(input);
+            seller = SellerDAO.findByName(conn, sellerName);
+            if (seller == null) {
+                System.out.println("Seller named '" + sellerName + "' not found.");
+                continue;
+            }
+
+            System.out.println("\nSeller named '" + seller.getName() + "' found.");
+            System.out.println("Information: " + seller);
+            System.out.print("Are you sure you want to delete this seller? (Y/N): ");
+            input = sc.nextLine();
+
+            if (input.equalsIgnoreCase("N") || input.equalsIgnoreCase("NO")) {
+                System.out.println("Deletion cancelled.");
+                continue;
+            } else if (!input.equalsIgnoreCase("Y") && !input.equalsIgnoreCase("YES")) {
+                System.out.println("Invalid option. Deletion cancelled.");
+                continue;
+            }
+
+            boolean deleted = SellerDAO.deleteByName(conn, sellerName);
+            if (deleted) {
+                System.out.println("\nSeller named '" + seller.getName() + "' successfully deleted.");
+            } else {
+                System.out.println("Failed to delete seller.");
+            }
+            System.out.println();
         }
     }
 }
