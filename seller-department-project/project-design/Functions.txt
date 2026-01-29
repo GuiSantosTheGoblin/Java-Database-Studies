@@ -1,14 +1,14 @@
 Department DAO:
-	Department insert(Department obj);
-	Department update(Department obj);
-	boolean deleteById(Integer id);
-	Department findById(Integer id);
-	List<Department> findAll();
+insert()
+update()
+deleteById()
+findById()
+findAll()
 
 Seller DAO:
-	Seller insert(Seller obj);
-	Seller update(Seller obj);
-	boolean deleteById(Integer id);
-	Seller findById(Integer id);
-	List<Seller> findAll();
-	List<Seller> findByDepartment(Department department);
+insert()
+update()
+deleteById()
+findById()
+findAll()
+findByDepartment()
