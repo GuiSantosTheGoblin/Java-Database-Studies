@@ -1,0 +1,14 @@
+Department DAO:
+	void insert(Department obj);
+	void update(Department obj);
+	void deleteById(Integer id);
+	Department findById(Integer id);
+	List<Department> findAll();
+
+Seller DAO:
+	void insert(Seller obj);
+	void update(Seller obj);
+	void deleteById(Integer id);
+	Seller findById(Integer id);
+	List<Seller> findAll();
+	List<Seller> findByDepartment(Department department);
